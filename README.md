@@ -15,7 +15,7 @@
 ## Macros:
 <pre>
 	<b>BFISH_BLOCKSZ	sizeof(bfblk_t)
-	BFISH_MAX_KEY_LEN	64
+	BFISH_MAX_KEY_LEN	56
 	BFISH_MIN_KEY_LEN	 4</b>
 </pre>
 ## Functions:
