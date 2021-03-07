@@ -125,6 +125,10 @@
 #ifndef BFISH_H
 #define BFISH_H
 
+#ifndef __BYTE_ORDER__
+#error __BYTE_ORDER__ is not defined
+#endif /* __BYTE_ORDER__ */
+
 #include <stdint.h>
 
 #define BFISH_MIN_KEY_LEN  4
@@ -137,8 +141,13 @@ typedef struct bfish {
 typedef union bfblk {
 	uint64_t u64;
 	struct {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+		uint32_t hi;
+		uint32_t lo;
+#else
 		uint32_t lo;
 		uint32_t hi;
+#endif /* __BYTE_ORDER__ */
 	} u32;
 } bfblk_t;
 
