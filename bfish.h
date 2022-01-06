@@ -204,7 +204,7 @@ static inline void block_swap_hilo(bfblk_t *blk) {
 	x = blk->u32.hi;
 	blk->u64 = (blk->u64 << 32) | x;
 }
-void crypt(bfish_t *bf, void *buf, size_t len, int mth) {
+static void bfcrypt(bfish_t *bf, void *buf, size_t len, int mth) {
 
 	bfblk_t blk;
 	uint8_t *_buf = buf;
@@ -252,12 +252,12 @@ void bfish_encrypt(bfish_t *bf, void *buf, size_t len) {
 	assert(bf != NULL && buf != NULL);
 	if (len == (size_t)-1)
 		len = strlen(buf);
-	crypt(bf, buf, len, BFISH_ENCRYPT);
+	bfcrypt(bf, buf, len, BFISH_ENCRYPT);
 }
 void bfish_decrypt(bfish_t *bf, void *buf, size_t len) {
 
 	assert(bf != NULL && buf != NULL && !(len % 8));
-	crypt(bf, buf, len, BFISH_DECRYPT);
+	bfcrypt(bf, buf, len, BFISH_DECRYPT);
 }
 void bfish_init(bfish_t *bf, void *key, size_t len) {
 
