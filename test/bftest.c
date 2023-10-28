@@ -30,54 +30,56 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define BFISH_DEFINE
+#define BFISH_IMPL
 #include "../bfish.h"
 #include "test_vectors.c"
 
-void tst_variable_key(void) {
-
+void tst_variable_key(void)
+{
+	int i;
 	bfish_t bf;
 	bfblk_t blk;
 
-	for (int i = 0; i < NUM_VARIABLE_KEY_TESTS; i ++) {
-		blk.u32.hi = plaintext_vl[i];
-		blk.u32.lo = plaintext_vr[i];
+	for (i = 0; i < NUM_VARIABLE_KEY_TESTS; i ++) {
+		blk.hi = plaintext_vl[i];
+		blk.lo = plaintext_vr[i];
 		bfish_init(&bf, variable_key[i], 8);
 		bfish_enblock(&bf, &blk);
-		assert(blk.u32.hi == ciphertext_vl[i]);
-		assert(blk.u32.lo == ciphertext_vr[i]);
+		assert(blk.hi == ciphertext_vl[i]);
+		assert(blk.lo == ciphertext_vr[i]);
 		bfish_init(&bf, variable_key[i], 8);
 		bfish_deblock(&bf, &blk);
-		assert(blk.u32.hi == plaintext_vl[i]);
-		assert(blk.u32.lo == plaintext_vr[i]);
+		assert(blk.hi == plaintext_vl[i]);
+		assert(blk.lo == plaintext_vr[i]);
 	}
 }
-void tst_set_key(void) {
-
+void tst_set_key(void)
+{
+	int i;
 	bfish_t bf;
 	bfblk_t blk;
 
-	for (int i = 0; i < NUM_SET_KEY_TESTS; i ++) {
-		blk.u32.hi = 0xFEDCBA98;
-		blk.u32.lo = 0x76543210;
+	for (i = 0; i < NUM_SET_KEY_TESTS; i ++) {
+		blk.hi = 0xFEDCBA98;
+		blk.lo = 0x76543210;
 		bfish_init(&bf, set_key, i + 4);
 		bfish_enblock(&bf, &blk);
-		assert(blk.u32.hi == ciphertext_sl[i]);
-		assert(blk.u32.lo == ciphertext_sr[i]);
+		assert(blk.hi == ciphertext_sl[i]);
+		assert(blk.lo == ciphertext_sr[i]);
 		bfish_init(&bf, set_key, i + 4);
 		bfish_deblock(&bf, &blk);
-		assert(blk.u32.hi == 0xFEDCBA98);
-		assert(blk.u32.lo == 0x76543210);
+		assert(blk.hi == 0xFEDCBA98);
+		assert(blk.lo == 0x76543210);
 	}
 }
-void tst_crypt(void) {
-
+void tst_crypt(void)
+{
 	char buf[16];
 	bfish_t bf;
 	char key[] = "secret";
 	char text[] = "blowfish_test";
-	uint8_t ciph[] = { 0x64, 0x94, 0xfb, 0xd0, 0xaa, 0xf6, 0xcb, 0xe6,
-	                   0xf9, 0xf3, 0xd8, 0xaf, 0x98, 0xba, 0x51, 0x80 };
+	unsigned char ciph[] = { 0x64, 0x94, 0xfb, 0xd0, 0xaa, 0xf6, 0xcb,
+	    0xe6, 0xf9, 0xf3, 0xd8, 0xaf, 0x98, 0xba, 0x51, 0x80 };
 
 	bfish_init(&bf, key, -1);
 	strcpy(buf, text);
@@ -87,8 +89,8 @@ void tst_crypt(void) {
 	bfish_decrypt(&bf, buf, sizeof(buf));
 	assert(!strcmp(buf, "blowfish_test"));
 }
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
 	tst_variable_key();
 	tst_set_key();
 	tst_crypt();

@@ -27,7 +27,7 @@
  * Written and made public by C.J.Wagenius - 2021-03-06
  **/
 /**
- * A C99 blowfish ECB API
+ * A ANSI C blowfish ECB API
  * ---------------------------------------------------------------------------
  * Structures:
  *
@@ -44,7 +44,7 @@
  * ---------------------------------------------------------------------------
  * Macros:
  *
- * 	BFISH_BLOCKSZ	sizeof(bfblk_t)
+ * 	BFISH_BLOCKSZ		 8
  * 	BFISH_MAX_KEY_LEN	64
  *	BFISH_MIN_KEY_LEN	 4
  *
@@ -75,13 +75,13 @@
  * 		number of bytes. [bf] is a pointer to a initiated blowfish-
  * 		structure and [buf] is a pointer to the data to be encrypted.
  *
- * 		[len] must be a multipler of eight, if [buf] is a correct blow-
- * 		fish encrypted string of bytes.
+ * 		[len] must be a multipler of eight to be a correct blowfish
+ * 		encrypted string of bytes.
  *
  * 		This functions decrypts to the buffer in place.
  *
  *
- * 	void bfish_encrypt(bfish_t *bf, void *buf, size_t len)
+ * 	void bfish_encrypt(bfish_t *bf, const void *buf, size_t len)
  * 	
  * 		This is a convenience-function that encrypts a buffer of [len]
  * 		number of bytes. [bf] is a pointer to a initiated blowfish-
@@ -97,7 +97,7 @@
  * 		the function bfish_buflen).
  *
  *
- *	void bfish_init(bfish_t *bf, void *key, size_t len)
+ *	void bfish_init(bfish_t *bf, const void *key, size_t len)
  *
  * 		Initiates a bluefish-structure for de-/encoding. [bf] is a
  * 		pointer to a allocated blowfish-structure. [key] is the byte-
@@ -107,14 +107,14 @@
  * 		string, and strlen() will be used to calculate its length.
  *
  *
- * 	size_t bfish_read(bfblk_t *blk, void *buf, size_t len)
+ * 	size_t bfish_read(bfblk_t *blk, const void *buf, size_t len)
  *
  * 		Reads max eight bytes (lesser if [len] < 8) from [buf] and puts
  * 		it in the blowfish-buffer at [blk]. The block are appended with
  * 		zeroes if [len] < 8.
  *
  *
- *	void bfish_write(bfblk_t *blk, void *buf)
+ *	void bfish_write(const bfblk_t *blk, void *buf)
  *
  * 		Writes the eight byte long blowfish-block [blk] to the buffer
  * 		at [buf].
@@ -129,85 +129,81 @@
 #error __BYTE_ORDER__ is not defined
 #endif /* __BYTE_ORDER__ */
 
-#include <stdint.h>
+#include <limits.h>
+
+#if UINT_MAX < 4294967295
+#define BFISH_U32 unsigned long
+#else
+#define BFISH_U32 unsigned int
+#endif
 
 #define BFISH_MIN_KEY_LEN  4
 #define BFISH_MAX_KEY_LEN 56
+#define BFISH_BLOCKSZ 8
 
 typedef struct bfish {
-	uint32_t pbox[18];
-	uint32_t sbox[4][256];
+	BFISH_U32 pbox[18];
+	BFISH_U32 sbox[4][256];
 } bfish_t;
-typedef union bfblk {
-	uint64_t u64;
-	struct {
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-		uint32_t hi;
-		uint32_t lo;
-#else
-		uint32_t lo;
-		uint32_t hi;
-#endif /* __BYTE_ORDER__ */
-	} u32;
+typedef struct bfblk {
+		BFISH_U32 hi;
+		BFISH_U32 lo;
 } bfblk_t;
 
 extern size_t bfish_buflen(size_t len);
-extern void bfish_deblock(bfish_t *bf, bfblk_t *blk);
-extern void bfish_enblock(bfish_t *bf, bfblk_t *blk);
-extern void bfish_encrypt(bfish_t *bf, void *buf, size_t len);
-extern void bfish_decrypt(bfish_t *bf, void *buf, size_t len);
-extern void bfish_init(bfish_t *bf, void *key, size_t len);
-extern size_t bfish_read(bfblk_t *blk, void *buf, size_t len);
-extern void bfish_write(bfblk_t *blk, void *buf);
+extern void bfish_deblock(bfish_t* bf, bfblk_t* blk);
+extern void bfish_enblock(bfish_t* bf, bfblk_t* blk);
+extern void bfish_encrypt(bfish_t* bf, const void* buf, size_t len);
+extern void bfish_decrypt(bfish_t* bf, void* buf, size_t len);
+extern void bfish_init(bfish_t* bf, const void* key, size_t len);
+extern size_t bfish_read(bfblk_t* blk, const void* buf, size_t len);
+extern void bfish_write(const bfblk_t* blk, void* buf);
 
-#ifdef BFISH_DEFINE
+#ifdef BFISH_IMPL
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 
-#define min(a, b) (a < b ? a : b)
-#define numof(x) (sizeof(x)/sizeof(*x))
-#define BFISH_BLOCKSZ sizeof(bfblk_t)
+#define BFISH_NUMOF(x) (sizeof(x)/sizeof(*x))
 #define BFISH_ENCRYPT 0
 #define BFISH_DECRYPT 1
 
-typedef void (*dpatch_t)(bfish_t*, bfblk_t*);
+static const BFISH_U32 pbox[18];
+static const BFISH_U32 sbox[4][256];
 
-static const uint32_t pbox[18];
-static const uint32_t sbox[4][256];
+static void _bfish_magic_f(bfish_t* bf, bfblk_t* blk)
+{
+	BFISH_U32 a;
+	BFISH_U32 b;
+	BFISH_U32 c;
+	BFISH_U32 d;
+	BFISH_U32 e;
 
-static void block_magic_f(bfish_t *bf, bfblk_t *blk) {
-
-	uint32_t a;
-	uint32_t b;
-	uint32_t c;
-	uint32_t d;
-	uint32_t e;
-
-	e = (uint8_t)(d = blk->u32.hi);
+	e = (unsigned char)(d = blk->hi);
 	a = bf->sbox[3][e];
-	e = (uint8_t)(d >>= 8);
+	e = (unsigned char)(d >>= 8);
 	b = bf->sbox[2][e];
-	e = (uint8_t)(d >>= 8);
+	e = (unsigned char)(d >>= 8);
 	c = bf->sbox[1][e];
-	e = (uint8_t)(d >>= 8);
+	e = (unsigned char)(d >>= 8);
 	c += bf->sbox[0][e];
 	c ^= b;
 	c += a;
-	blk->u32.lo ^= c;
+	blk->lo ^= c;
 }
-static inline void block_swap_hilo(bfblk_t *blk) {
+static void _bfish_swap_hilo(bfblk_t* blk)
+{
+	BFISH_U32 t;
 
-	uint32_t x;
-
-	x = blk->u32.hi;
-	blk->u64 = (blk->u64 << 32) | x;
+	t = blk->hi;
+	blk->hi = blk->lo;
+	blk->lo = t;
 }
-static void bfcrypt(bfish_t *bf, void *buf, size_t len, int mth) {
-
+static void _bfish_crypt(bfish_t *bf, void *buf, size_t len, int mth)
+{
 	bfblk_t blk;
-	uint8_t *_buf = buf;
+	unsigned char* _buf = buf;
 	void (*fnc[])(bfish_t*, bfblk_t*) = { bfish_enblock, bfish_deblock };
 
 	while (len) {
@@ -218,51 +214,69 @@ static void bfcrypt(bfish_t *bf, void *buf, size_t len, int mth) {
 		_buf += rb;
 	}
 }
+size_t bfish_buflen(size_t len)
+{
+	int t = len % 8;
 
-size_t bfish_buflen(size_t len) {
-
-	int x = len % 8;
-
-	return len + (x ? 8 - x : 0);
+	return len + (t ? 8 - t : 0);
 }
-void bfish_deblock(bfish_t *bf, bfblk_t *blk) {
+void bfish_deblock(bfish_t* bf, bfblk_t* blk)
+{
+	int i;
 
-	for (int i = 17; i > 1; i --) {
-		blk->u32.hi ^= bf->pbox[i];
-		block_magic_f(bf, blk);
-		block_swap_hilo(blk);
+	assert(bf != NULL);
+	assert(blk != NULL);
+
+	for (i = 17; i > 1; i --) {
+		blk->hi ^= bf->pbox[i];
+		_bfish_magic_f(bf, blk);
+		_bfish_swap_hilo(blk);
 	}
-	block_swap_hilo(blk);
-	blk->u32.lo ^= bf->pbox[1];
-	blk->u32.hi ^= bf->pbox[0];
+	_bfish_swap_hilo(blk);
+	blk->lo ^= bf->pbox[1];
+	blk->hi ^= bf->pbox[0];
 }
-void bfish_enblock(bfish_t *bf, bfblk_t *blk) {
+void bfish_enblock(bfish_t* bf, bfblk_t* blk)
+{
+	int i;
 
-	for (int i = 0; i < 16; i ++) {
-		blk->u32.hi ^= bf->pbox[i];
-		block_magic_f(bf, blk);
-		block_swap_hilo(blk);
+	assert(bf != NULL);
+	assert(blk != NULL);
+
+	for (i = 0; i < 16; i ++) {
+		blk->hi ^= bf->pbox[i];
+		_bfish_magic_f(bf, blk);
+		_bfish_swap_hilo(blk);
 	}
-	block_swap_hilo(blk);
-	blk->u32.lo ^= bf->pbox[16];
-	blk->u32.hi ^= bf->pbox[17];
+	_bfish_swap_hilo(blk);
+	blk->lo ^= bf->pbox[16];
+	blk->hi ^= bf->pbox[17];
 }
-void bfish_encrypt(bfish_t *bf, void *buf, size_t len) {
+void bfish_encrypt(bfish_t* bf, const void* buf, size_t len)
+{
+	assert(bf != NULL);
+	assert(buf != NULL);
 
-	assert(bf != NULL && buf != NULL);
 	if (len == (size_t)-1)
 		len = strlen(buf);
-	bfcrypt(bf, buf, len, BFISH_ENCRYPT);
+	_bfish_crypt(bf, (void*)buf, len, BFISH_ENCRYPT);
 }
-void bfish_decrypt(bfish_t *bf, void *buf, size_t len) {
+void bfish_decrypt(bfish_t* bf, void* buf, size_t len)
+{
+	assert(bf != NULL);
+	assert(buf != NULL);
+	assert((len % 8) == 0);
 
-	assert(bf != NULL && buf != NULL && !(len % 8));
-	bfcrypt(bf, buf, len, BFISH_DECRYPT);
+	_bfish_crypt(bf, buf, len, BFISH_DECRYPT);
 }
-void bfish_init(bfish_t *bf, void *key, size_t len) {
-
-	uint8_t *_key = key;
+void bfish_init(bfish_t* bf, const void* key, size_t len)
+{
+	int i;
+	int j;
+	int k;
+	BFISH_U32 t;
 	bfblk_t blk = { 0 };
+	const unsigned char* _key = key;
 
 	assert(bf != NULL);
 	assert(key != NULL);
@@ -273,52 +287,59 @@ void bfish_init(bfish_t *bf, void *key, size_t len) {
 
 	memcpy(bf->sbox, sbox, sizeof(sbox));
 	memcpy(bf->pbox, pbox, sizeof(pbox));
-	for (int i = 0, k = 0, x = 0; i < numof(bf->pbox); i ++) {
-		for (int j = 0; j < 4; j ++, k ++) {
+	for (i = k = t = 0; i < BFISH_NUMOF(bf->pbox); i ++) {
+		for (j = 0; j < 4; j ++, k ++) {
 			if (k == len)
 				k = 0;
-			x = (x << 8) | _key[k];
+			t = (t << 8) | _key[k];
 		}
-		bf->pbox[i] = pbox[i] ^ x;
+		bf->pbox[i] = pbox[i] ^ t;
 	}
-	for (int i = 0; i < numof(bf->pbox); i += 2) {
+	for (i = 0; i < BFISH_NUMOF(bf->pbox); i += 2) {
 		bfish_enblock(bf, &blk);
-		bf->pbox[i] = blk.u32.hi;
-		bf->pbox[i + 1] = blk.u32.lo;
+		bf->pbox[i] = blk.hi;
+		bf->pbox[i + 1] = blk.lo;
 	}
 
-	for (int i = 0; i < numof(bf->sbox); i ++) {
-		for (int j = 0; j < numof(*bf->sbox); j += 2) {
+	for (i = 0; i < BFISH_NUMOF(bf->sbox); i ++) {
+		for (j = 0; j < BFISH_NUMOF(*bf->sbox); j += 2) {
 			bfish_enblock(bf, &blk);
-			bf->sbox[i][j] = blk.u32.hi;
-			bf->sbox[i][j + 1] = blk.u32.lo;
+			bf->sbox[i][j] = blk.hi;
+			bf->sbox[i][j + 1] = blk.lo;
 		}
 	}
 }
-size_t bfish_read(bfblk_t *blk, void *buf, size_t len) {
+size_t bfish_read(bfblk_t* blk, const void* buf, size_t len)
+{
+	int i;
+	const unsigned char* _buf = buf;
+	BFISH_U32* hilo = (BFISH_U32*)blk;
 
-	size_t rb = 0;
-	uint8_t *_buf = buf;
+	assert(blk != NULL);
+	assert(buf != NULL);
 
-	blk->u64 = 0;
-	len = min(8, len);
-	for (int i = 0; i < len; i ++) {
-		blk->u64 <<= 8;
-		blk->u64 |= _buf[rb];
-		rb ++;
+	len = (len < 8) ? len : 8;
+	for (i = 0; i < 8; i ++) {
+		hilo[(i > 3)] <<= 8;
+		hilo[(i > 3)] |= (i < len) ? _buf[i] : 0x00;
 	}
-	blk->u64 <<= 8 * (sizeof(blk) - len);
 
-	return rb;
+	return len;
 }
-void bfish_write(bfblk_t *blk, void *buf) {
+void bfish_write(const bfblk_t* blk, void* buf)
+{
+	int i;
+	BFISH_U32 hilo[2];
+	unsigned char* _buf = buf;
 
-	uint8_t *_buf = buf;
-	uint64_t out = blk->u64;
-	
-	for (int i = sizeof(*blk) - 1; i > -1; i --) {
-		_buf[i] = (uint8_t)out;
-		out >>= 8;
+	assert(blk != NULL);
+	assert(buf != NULL);
+
+	hilo[0] = blk->hi;
+	hilo[1] = blk->lo;
+	for (i = 7; i > -1; i --) {
+		_buf[i] = (unsigned char)hilo[(i > 3)];
+		hilo[i > 3] >>= 8;
 	}
 }
 
@@ -330,13 +351,13 @@ void bfish_write(bfblk_t *blk, void *buf) {
    =============================================================
 
 */
-static const uint32_t pbox[18] = {
+static const BFISH_U32 pbox[18] = {
 	0x243f6a88L, 0x85a308d3L, 0x13198a2eL, 0x03707344L, 0xa4093822L,
 	0x299f31d0L, 0x082efa98L, 0xec4e6c89L, 0x452821e6L, 0x38d01377L,
 	0xbe5466cfL, 0x34e90c6cL, 0xc0ac29b7L, 0xc97c50ddL, 0x3f84d5b5L,
 	0xb5470917L, 0x9216d5d9L, 0x8979fb1bL
 };
-static const uint32_t sbox[4][256] = { {
+static const BFISH_U32 sbox[4][256] = { {
 	0xd1310ba6L, 0x98dfb5acL, 0x2ffd72dbL, 0xd01adfb7L, 0xb8e1afedL,
 	0x6a267e96L, 0xba7c9045L, 0xf12c7f99L, 0x24a19947L, 0xb3916cf7L,
 	0x0801f2e2L, 0x858efc16L, 0x636920d8L, 0x71574e69L, 0xa458fea3L,
@@ -550,7 +571,10 @@ static const uint32_t sbox[4][256] = { {
 	0x3ac372e6L
 } };
 
-#endif /* BFISH_DEFINE */
+#undef BFISH_DECRYPT
+#undef BFISH_ENCRYPT
+#undef BFISH_NUMOF
 
+#endif /* BFISH_IMPL */
 #endif /* BFISH_H */
 

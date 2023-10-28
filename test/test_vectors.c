@@ -13,7 +13,7 @@
 #define NUM_SET_KEY_TESTS	21
 
 /* plaintext bytes -- left halves */
-uint32_t plaintext_vl[NUM_VARIABLE_KEY_TESTS] = {
+BFISH_U32 plaintext_vl[NUM_VARIABLE_KEY_TESTS] = {
    0x00000000l, 0xFFFFFFFFl, 0x10000000l, 0x11111111l, 0x11111111l,
    0x01234567l, 0x00000000l, 0x01234567l, 0x01A1D6D0l, 0x5CD54CA8l,
    0x0248D438l, 0x51454B58l, 0x42FD4430l, 0x059B5E08l, 0x0756D8E0l,
@@ -23,7 +23,7 @@ uint32_t plaintext_vl[NUM_VARIABLE_KEY_TESTS] = {
    0xFFFFFFFFl, 0x00000000l, 0x00000000l, 0xFFFFFFFFl };
 
 /* plaintext bytes -- right halves */
-uint32_t plaintext_vr[NUM_VARIABLE_KEY_TESTS] = {
+BFISH_U32 plaintext_vr[NUM_VARIABLE_KEY_TESTS] = {
    0x00000000l, 0xFFFFFFFFl, 0x00000001l, 0x11111111l, 0x11111111l,
    0x89ABCDEFl, 0x00000000l, 0x89ABCDEFl, 0x39776742l, 0x3DEF57DAl,
    0x06F67172l, 0x2DDF440Al, 0x59577FA2l, 0x51CF143Al, 0x774761D2l,
@@ -33,7 +33,7 @@ uint32_t plaintext_vr[NUM_VARIABLE_KEY_TESTS] = {
    0xFFFFFFFFl, 0x00000000l, 0x00000000l, 0xFFFFFFFFl };
 
 /* key bytes for variable key tests */
-uint8_t variable_key[NUM_VARIABLE_KEY_TESTS][8] = {
+unsigned char variable_key[NUM_VARIABLE_KEY_TESTS][8] = {
    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
    { 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
@@ -70,13 +70,13 @@ uint8_t variable_key[NUM_VARIABLE_KEY_TESTS][8] = {
    { 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10 }};
 
 /* key bytes for set key tests */
-uint8_t set_key[24] = {
+unsigned char set_key[24] = {
    0xF0, 0xE1, 0xD2, 0xC3, 0xB4, 0xA5, 0x96, 0x87,
    0x78, 0x69, 0x5A, 0x4B, 0x3C, 0x2D, 0x1E, 0x0F,
    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
 
 /* ciphertext bytes -- left halves */
-uint32_t ciphertext_vl[NUM_VARIABLE_KEY_TESTS] = {
+BFISH_U32 ciphertext_vl[NUM_VARIABLE_KEY_TESTS] = {
    0x4EF99745l, 0x51866FD5l, 0x7D856F9Al, 0x2466DD87l, 0x61F9C380l,
    0x7D0CC630l, 0x4EF99745l, 0x0ACEAB0Fl, 0x59C68245l, 0xB1B8CC0Bl,
    0x1730E577l, 0xA25E7856l, 0x353882B1l, 0x48F4D088l, 0x432193B7l,
@@ -85,7 +85,7 @@ uint32_t ciphertext_vl[NUM_VARIABLE_KEY_TESTS] = {
    0xD1ABB290l, 0x55CB3774l, 0xFA34EC48l, 0xA7907951l, 0xC39E072Dl,
    0x014933E0l, 0xF21E9A77l, 0x24594688l, 0x6B5C5A9Cl };
 
-uint32_t ciphertext_sl[NUM_SET_KEY_TESTS] = {
+BFISH_U32 ciphertext_sl[NUM_SET_KEY_TESTS] = {
    0xBE1E6394l, 0xB39E4448l, 0x9457AA83l, 0x8BB77032l, 0xE87A244El,
    0x15750E7Al, 0x122BA70Bl, 0x3A833C9Al, 0x9409DA87l, 0x884F8062l,
    0x1F85031Cl, 0x79D9373Al, 0x93142887l, 0x03429E83l, 0xA4299E27l,
@@ -93,7 +93,7 @@ uint32_t ciphertext_sl[NUM_SET_KEY_TESTS] = {
    0x05044B62l };
 
 /* ciphertext bytes -- right halves */
-uint32_t ciphertext_vr[NUM_VARIABLE_KEY_TESTS] = {
+BFISH_U32 ciphertext_vr[NUM_VARIABLE_KEY_TESTS] = {
    0x6198DD78l, 0xB85ECB8Al, 0x613063F2l, 0x8B963C9Dl, 0x2281B096l,
    0xAFDA1EC7l, 0x6198DD78l, 0xC6A0A28Dl, 0xEB05282Bl, 0x250F09A0l,
    0x8BEA1DA4l, 0xCF2651EBl, 0x09CE8F1Al, 0x4C379918l, 0x8951FC98l,
@@ -102,7 +102,7 @@ uint32_t ciphertext_vr[NUM_VARIABLE_KEY_TESTS] = {
    0x658BC778l, 0xD13EF201l, 0x47B268B2l, 0x08EA3CAEl, 0x9FAC631Dl,
    0xCDAFF6E4l, 0xB71C49BCl, 0x5754369Al, 0x5D9E0A5Al };
 
-uint32_t ciphertext_sr[NUM_SET_KEY_TESTS] = {
+BFISH_U32 ciphertext_sr[NUM_SET_KEY_TESTS] = {
    0x08640F05l, 0x1BDB1E6El, 0xB1928C0Dl, 0xF960629Dl, 0x2CC85E82l,
    0x4F4EC577l, 0x3AB64AE0l, 0xFFC537F6l, 0xA90F6BF2l, 0x5060B8B4l,
    0x19E11968l, 0x714CA34Fl, 0xEE3BE15Cl, 0x8CE2D14Bl, 0x469FF67Bl,

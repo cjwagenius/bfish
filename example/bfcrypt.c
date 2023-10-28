@@ -2,6 +2,10 @@
  *
  * 	En-/decrypts files with blowfish.
  *
+ *	The encrypted data created with this example program, is appended with
+ *	a blowfish-block (eight bytes). It stores the encrypted number of null-
+ *	padding of the last data-block to be recalled when decrypting.
+ *
  * USAGE:
  * 	bfcrypt +secret < file_to_encrypt > file_to_encrypt_to
  * 	bfcrypt -secret < file_to_decrypt > file_to_decrypt_to
@@ -43,13 +47,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#define BFISH_DEFINE
+#define BFISH_IMPL
 #include "../bfish.h"
 
 char buf[4096];
 
-void die(char *msg) {
-
+void die(char* msg)
+{
 	if (!msg)
 		msg = "USAGE: bfcrypt [+|-]secret < infile > outfile\n"
 		      "\n"
@@ -59,49 +63,49 @@ void die(char *msg) {
 		      "\t- decrypt\n";
 	fputs(msg, stderr);
 	fputc('\n', stderr);
+
 	exit(EXIT_FAILURE);
 }
-void decrypt(bfish_t *bf) {
-
+void decrypt(bfish_t* bf)
+{
 	int c;
 	size_t rb;
 	bfblk_t blk;
 	
 	while ((rb = fread(buf, 1, sizeof(buf), stdin))) {
-		if (rb % 8) {
+		if (rb % 8)
 			die("stream error");
-			exit(EXIT_FAILURE);
-		}
 		bfish_decrypt(bf, buf, rb);
 		if ((c = fgetc(stdin)) == EOF) {
 			rb -= BFISH_BLOCKSZ;
 			bfish_read(&blk, buf + rb, BFISH_BLOCKSZ);
-			rb -= blk.u64 ? BFISH_BLOCKSZ - blk.u64 : 0;
+			if (blk.lo && blk.lo <= 8)
+				rb -= BFISH_BLOCKSZ - blk.lo;
 		} else {
 			ungetc(c, stdin);
 		}
 		fwrite(buf, 1, rb, stdout);
 	}
 }
-void encrypt(bfish_t *bf) {
-
-	int mod = 0;
+void encrypt(bfish_t* bf)
+{
 	size_t rb;
 	bfblk_t blk;
+	int mod = 0;
 
 	while ((rb = fread(buf, 1, sizeof(buf), stdin))) {
 		mod = rb % 8;
 		bfish_encrypt(bf, buf, rb);
 		fwrite(buf, 1, bfish_buflen(rb), stdout);
 	}
-	blk.u64 = mod;
+	blk.lo = mod;
 	bfish_enblock(bf, &blk);
 	bfish_write(&blk, buf);
 	fwrite(buf, BFISH_BLOCKSZ, 1, stdout);
 }
 
-int main(int argc, char **argv) {
-
+int main(int argc, char* argv[])
+{
 	int m;
 	bfish_t bf;
 

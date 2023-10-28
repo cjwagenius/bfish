@@ -1,4 +1,4 @@
-# bfish.h - A C99 blowfish ECB API
+# bfish.h - A ANSI C blowfish ECB API
 
 ## Structures:
 <pre>
@@ -8,13 +8,13 @@
 	before use.
 
 
-    <b>typedef union bfblk bfblk_t</b>
+    <b>typedef struct bfblk bfblk_t</b>
 
 	A blowfish-block that is used for en-/decrypting data.
 </pre>
 ## Macros:
 <pre>
-	<b>BFISH_BLOCKSZ	sizeof(bfblk_t)
+	<b>BFISH_BLOCKSZ	8
 	BFISH_MAX_KEY_LEN	56
 	BFISH_MIN_KEY_LEN	 4</b>
 </pre>
@@ -51,7 +51,7 @@
 	This functions decrypts to the buffer in place.
 
 
-    <b>void bfish_encrypt(bfish_t *bf, void *buf, size_t len)</b>
+    <b>void bfish_encrypt(bfish_t *bf, const void *buf, size_t len)</b>
 	
 	This is a convenience-function that encrypts a buffer of [len]
 	number of bytes. [bf] is a pointer to a initiated blowfish-
@@ -67,7 +67,7 @@
 	the function bfish_buflen).
 
 
-    <b>void bfish_init(bfish_t *bf, void *key, size_t len)</b>
+    <b>void bfish_init(bfish_t *bf, const void *key, size_t len)</b>
 
 	Initiates a bluefish-structure for de-/encoding. [bf] is a
 	pointer to a allocated blowfish-structure. [key] is the byte-
@@ -77,14 +77,14 @@
 	string, and strlen() will be used to calculate its length.
 
 
-    <b>size_t bfish_read(bfblk_t *blk, void *buf, size_t len)</b>
+    <b>size_t bfish_read(bfblk_t *blk, const void *buf, size_t len)</b>
 
 	Reads max eight bytes (lesser if [len] < 8) from [buf] and puts
 	it in the blowfish-buffer at [blk]. The block are appended with
 	zeroes if [len] < 8.
 
 
-    <b>void bfish_write(bfblk_t *blk, void *buf)</b>
+    <b>void bfish_write(const bfblk_t *blk, void *buf)</b>
 
 	Writes the eight byte long blowfish-block [blk] to the buffer
 	at [buf].
