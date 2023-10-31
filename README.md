@@ -14,7 +14,7 @@
 </pre>
 ## Macros:
 <pre>
-	<b>BFISH_BLOCKSZ	8
+	<b>BFISH_BLOCKSZ		8
 	BFISH_MAX_KEY_LEN	56
 	BFISH_MIN_KEY_LEN	 4</b>
 </pre>

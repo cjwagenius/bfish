@@ -125,10 +125,6 @@
 #ifndef BFISH_H
 #define BFISH_H
 
-#ifndef __BYTE_ORDER__
-#error __BYTE_ORDER__ is not defined
-#endif /* __BYTE_ORDER__ */
-
 #include <limits.h>
 
 #if UINT_MAX < 4294967295
